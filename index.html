@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>liat ujihub yang salah dmn ya hmm</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,600;1,14..32,600&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="mt-10 flex flex-col items-center mb-10">
+      <p class="text-white">liat hasil ujian (salah benar soal) dari ujihub</p>
+      <p class="text-white">
+        *note: datamu bakal 100% aman, silahkan cek source code di
+        <a class="underline" href="https://github.com/justhar">sini</a>
+      </p>
+      <p class="mt-5 max-w-2xl text-center">
+        hasil ujian ini bisa dilihat karna kelalaian kediri dev, yang merupakan
+        developer dari ujihub.
+      </p>
+      <h1 class="mt-5 text-2xl">- caranya -</h1>
+      <div class="align-left mt-5 max-w-xl">
+        <p class="mt-5">
+          sebelum kamu bisa liat hasil ujian, kamu harus ngeaktifin CORS
+          anywhere, jadi di ujihub itu make namanya cors, dia itu nggak ngijinin
+          kita buat akses data dari domain lain, nah kita bisa make cors
+          anywhere buat ngelakuin itu (kalo ga percaya, takut kena hack bla,
+          cari di gugel ato github ato dmn lah)
+        </p>
+        <p class="mt-5">
+          cara ngaktifin cors anywhere, pencet link
+          <a
+            class="underline"
+            href="https://cors-anywhere.herokuapp.com/corsdemo"
+            >sini</a
+          >, dan pencet tombol yang ada tulisan "Request temporary access to the
+          demo server". nah, itu bakal ngijinin kita buat akses data dari domain
+          lain.
+        </p>
+        <p class="mt-5">ada 2 data dari ujihub yang harus diambil, yaitu:</p>
+        <ul class="list-disc">
+          <li>HTTP API endpoint</li>
+          <li>Token Bearer</li>
+        </ul>
+
+        <p class="mt-5">
+          buat dapet data tersebut, buka website ujihub, login, dan buka detail
+          ujian yang mau kamu liat hasilnya.
+        </p>
+        <p class="mt-5">setelah itu, klik kanan, trs pilih inspect.</p>
+        <p class="mt-5">trs pilih tab network</p>
+        <img src="public/1.PNG" alt="" />
+        <p class="mt-5">
+          nah sekarang, refresh website nya, pake ctrl r ato apa yg penting
+          refresh, trs
+        </p>
+        <img src="public/2.PNG" alt="" />
+        <p class="mt-5">
+          klik url yang ada tulisan
+          <code>preview?</code>, yang ada di tab network tersebut
+        </p>
+        <p class="mt-5">
+          trs pilih tab header, nah disitu ada yang namanya
+          <code>Request URL</code>, nah itu adalah endpoint yang kita butuhin,
+          copy url tersebut.
+        </p>
+        <img src="public/3.png" alt="" />
+        <p class="mt-5">
+          setelah itu, scroll kebawah, trs cari yang ada tulisan Authorization
+          dan Bearer, itu di copy yang tulisan gajelas itu
+        </p>
+        <img src="public/4.png" alt="" />
+      </div>
+      <input
+        type="text"
+        id="curl"
+        class="mt-5 w-1/2 text-black bg-white rounded-md p-2"
+        placeholder="paste url disini"
+      />
+      <input
+        type="text"
+        id="bearer"
+        class="mt-5 w-1/2 text-black bg-white rounded-md p-2"
+        placeholder="paste token disini"
+      />
+      <button
+        id="submit"
+        class="mt-5 w-1/2 bg-blue-500 text-white rounded-md p-2 cursor-pointer hover:bg-blue-600"
+        onclick="getData()"
+      >
+        lihat hasil ujian
+      </button>
+      <div id="result" class="mt-5 w-1/2">
+        <p class="text-white w-full text-center align-center items-center">
+          ini hasil ujianmu
+        </p>
+      </div>
+    </div>
+  </body>
+  <script>
+    async function getData() {
+      const curl = document.getElementById("curl").value;
+      const bearer = document.getElementById("bearer").value;
+
+      //replace curl's query of page_size to 50
+      const fixedCurl = curl.replace(/page_size=\d+/g, "page_size=50");
+      console.log(fixedCurl);
+
+      if (!curl || !bearer) {
+        alert("isi semua data");
+        return;
+      }
+
+      const proxyUrl = "https://cors-anywhere.herokuapp.com/";
+      let response;
+      try {
+        const res = await fetch(proxyUrl + fixedCurl, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${bearer}`,
+          },
+        });
+        response = await res.json();
+      } catch (err) {
+        alert("gagal dapet data, coba cek datanya bener apa ngga");
+        console.log(err);
+        return;
+      }
+      displayQuestions(response.data.content);
+    }
+    // Add this function to format and display questions
+    function displayQuestions(questions) {
+      const resultDiv = document.getElementById("result");
+      if (!Array.isArray(questions) || questions.length === 0) {
+        resultDiv.innerHTML =
+          '<p class="text-white text-center">Tidak ada soal ditemukan.</p>';
+        return;
+      }
+      let html = "";
+      questions.forEach((q, idx) => {
+        // Parse HTML entities and tags for question and options
+        function parseHTML(str) {
+          const temp = document.createElement("div");
+          temp.innerHTML = str || "";
+          return temp.textContent || temp.innerText || "";
+        }
+        html += `<div class="bg-gray-800 rounded-md p-4 mb-4">
+          <div class="font-semibold text-lg mb-2 text-white">${idx + 1}. ${
+          parseHTML(q.text) || "(Soal tidak ditemukan)"
+        }</div>`;
+        // Show image/audio if available
+        if (q.image_url) {
+          html += `<img src="${q.image_url}" alt="Gambar soal" class="mb-2 max-h-48" />`;
+        }
+        if (q.audio_url) {
+          html += `<audio controls src="${q.audio_url}" class="mb-2"></audio>`;
+        }
+        // Render options A-E
+        html += '<ul class="mb-2">';
+        ["A", "B", "C", "D", "E"].forEach((key) => {
+          const optKey = `option_${key.toLowerCase()}`;
+          const optImg = q[`${optKey}_image_url`];
+          const optAudio = q[`${optKey}_audio_url`];
+          let optionClass = "ml-4 text-white";
+          let badges = "";
+          if (q.answer && q.answer.toUpperCase() === key) {
+            optionClass += " bg-yellow-700";
+            badges +=
+              ' <span class="text-yellow-300 font-bold">(Jawaban Kamu)</span>';
+          }
+          if (q.correct_answer && q.correct_answer.toUpperCase() === key) {
+            optionClass += " bg-green-800";
+            badges +=
+              ' <span class="text-green-400 font-bold">(Jawaban Benar)</span>';
+          }
+          html += `<li class="${optionClass}"><span class="font-bold">${key}.</span> ${parseHTML(
+            q[optKey]
+          )}${badges}`;
+          if (optImg)
+            html += `<br><img src="${optImg}" alt="Gambar opsi ${key}" class="inline max-h-24" />`;
+          if (optAudio)
+            html += `<br><audio controls src="${optAudio}"></audio>`;
+          html += `</li>`;
+        });
+        html += "</ul>";
+        // Show user answer and correct answer summary
+        if (q.answer) {
+          html += `<div class="text-yellow-300">Jawaban Kamu: ${q.answer} ${
+            q[`option_${q.answer?.toLowerCase()}`]
+              ? `- ${parseHTML(q[`option_${q.answer?.toLowerCase()}`])}`
+              : ""
+          }</div>`;
+        }
+        if (q.correct_answer) {
+          const correct = q.correct_answer.toUpperCase();
+          html += `<div class="text-green-400 font-bold">Jawaban Benar: ${correct} ${
+            q[`option_${correct.toLowerCase()}`]
+              ? `- ${parseHTML(q[`option_${correct.toLowerCase()}`])}`
+              : ""
+          }</div>`;
+        }
+        // Indicate if user was correct or not
+        if (q.answer && q.correct_answer) {
+          if (q.answer.toUpperCase() === q.correct_answer.toUpperCase()) {
+            html +=
+              '<div class="text-green-400 font-bold">✔ Jawaban kamu benar!</div>';
+          } else {
+            html +=
+              '<div class="text-red-400 font-bold">✘ Jawaban kamu salah.</div>';
+          }
+        }
+        html += "</div>";
+      });
+      resultDiv.innerHTML = html;
+    }
+  </script>
+  <style>
+    body {
+      font-family: Inter, sans-serif;
+      background-color: black;
+      color: white;
+    }
+  </style>
+</html>
